@@ -38,8 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
         chart.destroy(); // Destroy the chart if it exists
         chart = null;
       }
-      totalAmountDisplay.innerText = "₹0.00 Cr";
-      totalMonthlyDisplay.innerText = "₹0.00 Cr";
+      totalAmountDisplay.innerText = "₹0.00";
+      totalMonthlyDisplay.innerText = "₹0.00";
       chartCanvas.style.display = "none"; // Hide the chart
     } else {
       document.getElementById("results").style.display = "block";
