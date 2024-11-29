@@ -5,8 +5,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const customTypeInput = document.getElementById("custom-type");
   const investmentList = document.getElementById("investment-list");
   const totalAmountDisplay = document.getElementById("total-amount");
+  const totalMonthlyDisplay = document.getElementById("total-monthly");
+  const chartCanvas = document.getElementById("growth-chart");
 
-  const investments = JSON.parse(localStorage.getItem("investments")) || [];
+  let investments = JSON.parse(localStorage.getItem("investments")) || [];
+  let chart; // To hold the Chart.js instance
 
   const calculateFutureValue = (monthly, rate, years) => {
     const annualRate = rate / 100;
@@ -17,57 +20,108 @@ document.addEventListener("DOMContentLoaded", () => {
     ).toFixed(2);
   };
 
-  const formatToIndianNumberSystem = (num) => {
-    const crore = Math.floor(num / 1e7);
-    const lakh = Math.floor((num % 1e7) / 1e5);
-    let result = "";
-
-    if (crore > 0) result += `${crore} Crore `;
-    if (lakh > 0) result += `${lakh} Lakh `;
-    return result.trim();
-  };
-
-  const formatWithCommas = (num) => {
-    return parseFloat(num).toLocaleString("en-IN", {
+  const formatWithCommasAndCrore = (num) => {
+    const value = parseFloat(num) / 1e7; // Convert to crore
+    return `${value.toLocaleString("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    });
+    })} Cr`;
   };
 
   const renderInvestments = () => {
-    const resultsSection = document.getElementById("results");
-    if (investments.length === 0) {
-      resultsSection.style.display = "none"; // Hide section if no investments
-    } else {
-      resultsSection.style.display = "block"; // Show section if investments exist
-    }
     investmentList.innerHTML = "";
-    let totalProjected = 0;
 
-    investments.forEach((inv, index) => {
-      const futureValue = calculateFutureValue(
-        inv.monthly,
-        inv.rate,
-        inv.years
-      );
-      totalProjected += parseFloat(futureValue);
+    if (investments.length === 0) {
+      document.getElementById("results").style.display = "none";
 
-      const li = document.createElement("li");
-      li.innerHTML = `
-                <strong>${inv.type}</strong>: ₹${formatWithCommas(
-        inv.monthly
-      )} monthly, ${inv.rate}% return for ${inv.years} years.
-                <br>Projected Value: <strong>₹${formatWithCommas(
-                  futureValue
-                )} (${formatToIndianNumberSystem(futureValue)})</strong>
-                <button onclick="deleteInvestment(${index})">Delete</button>
-            `;
-      investmentList.appendChild(li);
+      if (chart) {
+        chart.destroy(); // Destroy the chart if it exists
+        chart = null;
+      }
+      totalAmountDisplay.innerText = "₹0.00 Cr";
+      totalMonthlyDisplay.innerText = "₹0.00 Cr";
+      chartCanvas.style.display = "none"; // Hide the chart
+    } else {
+      document.getElementById("results").style.display = "block";
+
+      let totalProjected = 0;
+      let totalMonthly = 0;
+
+      investments.forEach((inv, index) => {
+        const futureValue = calculateFutureValue(
+          inv.monthly,
+          inv.rate,
+          inv.years
+        );
+        totalProjected += parseFloat(futureValue);
+        totalMonthly += inv.monthly;
+
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <strong>${inv.type}</strong>: ₹${inv.monthly} monthly, ${
+          inv.rate
+        }% return for ${inv.years} years.
+          <br>Projected Value: ₹${formatWithCommasAndCrore(futureValue)}
+          <button onclick="deleteInvestment(${index})">X</button>
+        `;
+        li.addEventListener("click", () => {
+          if (investments.length) {
+            renderGraph(inv);
+          }
+        });
+        investmentList.appendChild(li);
+      });
+
+      totalAmountDisplay.innerText = formatWithCommasAndCrore(totalProjected);
+      totalMonthlyDisplay.innerText = totalMonthly;
+    }
+  };
+
+  const renderGraph = (investment) => {
+    const { monthly, rate, years } = investment;
+    const labels = [];
+    const contributions = [];
+    const interest = [];
+
+    for (let i = 1; i <= years; i++) {
+      const annualContribution = monthly * 12 * i;
+      const futureValue = calculateFutureValue(monthly, rate, i);
+      labels.push(`${i} Yr`);
+      contributions.push(annualContribution); // Convert to crore
+      interest.push(futureValue - annualContribution); // Convert to crore
+    }
+
+    if (chart) chart.destroy(); // Destroy the previous chart if it exists
+
+    chart = new Chart(chartCanvas, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Total Contribution",
+            data: contributions,
+            backgroundColor: "rgba(75, 192, 192)",
+          },
+          {
+            label: "Interest Earned",
+            data: interest,
+            backgroundColor: "rgba(153, 102, 255)",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "top" },
+        },
+        scales: {
+          y: { beginAtZero: true },
+        },
+      },
     });
 
-    totalAmountDisplay.innerText = `${formatWithCommas(
-      totalProjected
-    )} i.e ${formatToIndianNumberSystem(totalProjected)}`;
+    chartCanvas.style.display = "block"; // Show the chart
   };
 
   window.deleteInvestment = (index) => {
@@ -104,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const newInvestment = { type, monthly, rate, years };
     investments.push(newInvestment);
     localStorage.setItem("investments", JSON.stringify(investments));
-    form.reset();
+    // form.reset();
     renderInvestments();
   });
 

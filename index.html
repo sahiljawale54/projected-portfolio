@@ -11,12 +11,28 @@
       crossorigin="anonymous"
     />
     <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
     <div class="container">
       <h1 class="text-center">Investment Portfolio Tracker</h1>
-      <h4 class="mt-5 text-center">Total Projected Value:</h4>
-      <span id="total-amount" class="text-center text-danger d-block">0</span>
+
+      <div class="mt-5 header-info">
+        <div class="projected-value text-center">
+          <strong>
+            Projected Value:
+            <span class="text-danger" id="total-amount">₹0</span>
+          </strong>
+        </div>
+
+        <div class="text-center monthly-contribution">
+          <strong
+            >Monthly Contribution:
+            <span class="text-danger" id="total-monthly">₹0</span></strong
+          >
+        </div>
+      </div>
+
       <form id="investment-form">
         <label for="type">Investment Type:</label>
         <select id="type">
@@ -40,15 +56,21 @@
         <label for="duration">Duration (Years):</label>
         <input type="number" id="duration" required />
 
-        <button type="submit" class="d-block m-auto mt-4">
-          Add Investment
-        </button>
+        <div class="mt-4 mx-auto align-center d-flex">
+          <button type="submit" class="btn-success">Add Investment</button>
+          <button type="reset" class="mx-2 btn-danger">Reset</button>
+        </div>
       </form>
-      <hr />
-      <div id="results" style="display: none" >
-        <h2 class="text-center">Investment Summary</h2>
+
+      <div id="results" style="display: none">
+        <h2>Investment Summary</h2>
         <ul id="investment-list"></ul>
       </div>
+
+      <canvas
+        id="growth-chart"
+        style="display: none; max-width: 100%; height: 400px"
+      ></canvas>
     </div>
 
     <script src="script.js"></script>
