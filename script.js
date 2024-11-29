@@ -12,12 +12,14 @@ document.addEventListener("DOMContentLoaded", () => {
   let chart; // To hold the Chart.js instance
 
   const calculateFutureValue = (monthly, rate, years) => {
-    const annualRate = rate / 100;
-    const months = years * 12;
-    return (
-      monthly *
-      ((Math.pow(1 + annualRate / 12, months) - 1) / (annualRate / 12))
-    ).toFixed(2);
+    const i = rate / 12 / 100; // Monthly rate of interest
+    const n = years * 12; // Total number of payments
+
+    const M = monthly * ((Math.pow(1 + i, n) - 1) / i) * (1 + i); // Formula for SIP maturity value
+
+    return M.toFixed(2); // Return the result formatted to 2 decimal places
+
+    // return futureValue.toFixed(2);
   };
 
   const formatWithCommasAndCrore = (num) => {
